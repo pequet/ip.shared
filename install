@@ -9,8 +9,8 @@
 # ----------------------------------------------------------------------
 
 IPBLACK_SENDERNAME="$(hostname)"
-IPBLACK_SENDEREMAIL="pequet+ip.shared@gmail.com"
-IPBLACK_DESTEMAIL="pequet+ip.shared@gmail.com" # LEAVE BLANK IF YOU DON'T WANT TO RECEIVE EMAILS
+IPBLACK_SENDEREMAIL=""
+IPBLACK_DESTEMAIL="" # LEAVE BLANK IF YOU DON'T WANT TO RECEIVE EMAILS
 
 # ----------------------------------------------------------------------
 
