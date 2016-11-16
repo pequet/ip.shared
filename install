@@ -8,7 +8,7 @@
 
 # ----------------------------------------------------------------------
 
-IPBLACK_SENDERNAME="ip.blacklist"
+IPBLACK_SENDERNAME="$(hostname)"
 IPBLACK_SENDEREMAIL=""
 IPBLACK_DESTEMAIL="" # LEAVE BLANK IF YOU DON'T WANT TO RECEIVE EMAILS
 
@@ -23,7 +23,7 @@ REPO_URL=pequet/ip.shared
 dir=$(dirname $(readlink -f $0))
 dir_install=$dir/install_files
 
-git -C $dir config user.name "$(hostname)"
+git -C $dir config user.name "Contributor"
 
 cp $dir_install/etc/cron.daily/ip_blacklist /etc/cron.daily
 sed -i -e 's|\[REPO_URL\]|'$REPO_URL'|g' /etc/cron.daily/ip_blacklist
