@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# this script is part of https://github.com/pequet/ip.shared 
+
+# ----------------------------------------------------------------------
+
+# config
+
+# ----------------------------------------------------------------------
+
+# the path needs to remain pointing to the local copy of the repository on your machine, 
+# where you installed this script from ([INSTALL_DIR]). simply update the variable below
+# or reinstall, if you move it
+
+INSTALL_DIR=[INSTALL_DIR]
+
+NAME_FROM="[NAME_FROM]"
+EMAIL_FROM="[EMAIL_FROM]"
+EMAIL_TO="[EMAIL_TO]" # LEAVE BLANK IF YOU DON'T WANT TO RECEIVE EMAILS
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# stop editing
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+if [[ ! -d /etc/fail2ban ]]; then mkdir /etc/fail2ban; fi;
+
+# 1. get the latest version of the ip.shared file ONLY
+
+git -C $INSTALL_DIR fetch --all
+git -C $INSTALL_DIR checkout origin/master -- ip.shared
+git -C $INSTALL_DIR add ip.shared
+git -C $INSTALL_DIR commit -m ip.shared
+git -C $INSTALL_DIR merge --no-ff --no-edit
+
+fileA=/etc/fail2ban/ip.blacklist
+fileB=$INSTALL_DIR/ip.shared
+
+# ----------------------------------------------------------------------
+
+# The main list has exactly 1000 records. Our local list has 1000 plus the ones that were
+# caught since the last update. The remote 1000 possibly contain some new addresses added 
+# by other nodes. Therefore the remote list for sure does not contain any addresses older than 
+# our oldest. It is possible, however, and quite likely since the main list may have been 
+# updated and trimmed several times over, that our local list contains some old emails 
+# not in the main list anymore. These would be mistaken for new ones, so we need to only look 
+# at the tail of our local list, starting at the head of the main list (unless we know it
+# is not the case because this file doesn't contain the head of the remote file). 
+
+# ----------------------------------------------------------------------
+
+# 2. how many new IPs are we getting from database
+
+while read -r line; do
+    if [[ $line != "" ]]; 
+    then 
+        reportB+=$line$'\n';
+        let counterB++
+    fi
+done <<< "$(diff -U $(wc -l < $fileB) $fileB $fileA | grep '^-' | sed 's/^-//g' | sed 1,1d)"
+
+# ----------------------------------------------------------------------
+
+# 3. add the local IPs to the communal database 
+
+headB=$(head -1 $fileB)
+
+headL=$(grep -nx "$headB" $fileA|cut -d ":" -f1) # n returns line number, x means full line match
+
+if [[ $headL == "" ]];
+then
+    # head of $fileB $headB was not found in $fileA therefore we copy all fileA in temp.txt
+    cp $fileA $INSTALL_DIR/temp.txt
+else
+    # head of $fileB was found at line $headL of $fileA
+    echo "$(tail -n +$headL $fileA)" > $INSTALL_DIR/temp.txt # this is the tail of fileA starting at the head of fileB
+fi
+
+while read -r line; do
+    if [[ $line != "" ]]; 
+    then 
+        echo $line >> $fileB; 
+		reportA+=$line$'\n';
+		let counterA++
+    fi
+done <<< "$(diff -U $(wc -l < $INSTALL_DIR/temp.txt) $INSTALL_DIR/temp.txt $fileB | grep '^-' | sed 's/^-//g' | sed 1,1d)"
+
+# ----------------------------------------------------------------------
+
+# 4. i love it when a plan comes together
+
+echo "$(tail -n 1000 $fileB)" > $fileB # do not change this number
+
+git -C $INSTALL_DIR add ip.shared
+git -C $INSTALL_DIR commit -m 'Commit_'$(date +"%Y-%m-%d_%H:%M:%S")
+git -C $INSTALL_DIR push -u origin master
+
+cp $fileB $fileA
+
+# ----------------------------------------------------------------------
+
+# 5. email
+
+if [[ ! $EMAIL_TO == '' ]]
+then
+
+    if [[ $counterA -gt 1 ]]; then headerA="$counterA IPs were added to the shared list"; fi
+    if [[ $counterA -eq 1 ]]; then headerA="$counterA IP was added to the shared list"; fi
+
+    if [[ $counterB -gt 1 ]]; then headerB="$counterB IPs were received from the list"; fi
+    if [[ $counterB -eq 1 ]]; then headerB="$counterB IP was received from the list"; fi
+    
+    MAIL="$headerA
+$reportA
+$headerB
+$reportB"
+
+    echo "$MAIL"|mail -s "[ip.blacklist] List Merge (↑$counterA↓$counterB)" -a "From: $NAME_FROM <$EMAIL_FROM>" $EMAIL_TO
+
+fi
+
+exit 0
+
+# ----------------------------------------------------------------------
+
+# end

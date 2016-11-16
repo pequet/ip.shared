@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# ip.shared v1.0 November 14, 2016
+
+# ----------------------------------------------------------------------
+
+# email config
+
+# ----------------------------------------------------------------------
+
+IPBLACK_SENDERNAME="ip.blacklist"
+IPBLACK_SENDEREMAIL=""
+IPBLACK_DESTEMAIL="" # LEAVE BLANK IF YOU DON'T WANT TO RECEIVE EMAILS
+
+# ----------------------------------------------------------------------
+
+# set up
+
+# ----------------------------------------------------------------------
+
+REPO_URL=pequet/ip.shared
+
+dir=$(dirname $(readlink -f $0))
+dir_install=$dir/install_files
+
+git -C $dir config user.name "$(hostname)"
+
+cp $dir_install/etc/cron.daily/ip_blacklist /etc/cron.daily
+sed -i -e 's|\[REPO_URL\]|'$REPO_URL'|g' /etc/cron.daily/ip_blacklist
+sed -i -e 's|\[INSTALL_DIR\]|'$dir'|g' /etc/cron.daily/ip_blacklist
+sed -i -e 's|\[NAME_FROM\]|'$IPBLACK_SENDERNAME'|g' /etc/cron.daily/ip_blacklist
+sed -i -e 's|\[EMAIL_FROM\]|'$IPBLACK_SENDEREMAIL'|g' /etc/cron.daily/ip_blacklist
+sed -i -e 's|\[EMAIL_TO\]|'$IPBLACK_DESTEMAIL'|g' /etc/cron.daily/ip_blacklist
+chmod +x /etc/cron.daily/ip_blacklist
+
+cat << EOF
+Done!
+
+Don't move this folder. If you do, it's ok but you need to reinstall or update the install path in /etc/cron.daily/ip_blacklist
+
+Turning on and off the email notifications is also done in /etc/cron.daily/ip_blacklist
+
+Enjoy.
+
+EOF
+
+# ----------------------------------------------------------------------
+
+exit 0
