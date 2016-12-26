@@ -997,4 +997,4 @@
 218.108.190.143,sshd
 ==> /etc/fail2ban/ip.blacklist <==
 ==> /etc/fail2ban/ip.blacklist <==
-2.228.38.70,sshd
+218.3.140.74,sshd
