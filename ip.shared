@@ -1,7 +1,4 @@
 ==> /etc/fail2ban/ip.blacklist <==
-193.201.225.89,sshd
-31.162.89.21,sshd
-==> /etc/fail2ban/ip.blacklist <==
 183.93.212.242,sshd
 151.236.52.181,sshd
 90.150.245.78,sshd
@@ -998,3 +995,6 @@
 113.120.81.58,sshd
 177.129.242.216,sshd
 112.9.127.187,sshd
+==> /etc/fail2ban/ip.blacklist <==
+131.255.133.118,sshd
+105.98.144.125,sshd
